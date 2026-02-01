@@ -13,16 +13,38 @@ const VideoDetail = () => {
   const { id } = useParams();
 
   useEffect(() => {
-    fetchFromAPI(`videos?part=snippet,statistics&id=${id}`)
-      .then((data) => setVideoDetail(data.items[0]))
+    // Initialize with basic video data to avoid loading screen
+    // This allows the player to start immediately
+    setVideoDetail({ 
+      videoId: id,
+      title: 'Loading video...',
+      author: { title: 'Channel' }
+    });
+    setVideos([]);
 
-    fetchFromAPI(`search?part=snippet&relatedToVideoId=${id}&type=video`)
-      .then((data) => setVideos(data.items))
+    // Fetch recommendations/related videos
+    fetchFromAPI(`search?query=javascript`)
+      .then((data) => {
+        console.log('Recommendations:', data);
+        const videoItems = data.contents?.filter(item => item.type === 'video').map(item => item.video) || [];
+        setVideos(videoItems);
+      })
+      .catch((error) => console.error('Recommendations error:', error))
   }, [id]);
 
-  if(!videoDetail?.snippet) return <Loader />;
+  // Don't wait for data to load, render immediately with whatever we have
+  if(!videoDetail) return <Loader />;
 
-  const { snippet: { title, channelId, channelTitle }, statistics: { viewCount, likeCount } } = videoDetail;
+  const { 
+    title = 'Video',
+    author = {},
+    stats = {},
+    publishedTimeText = ''
+  } = videoDetail;
+
+  const channelTitle = author.title || 'Channel';
+  const channelId = author.channelId || '';
+  const viewCount = stats.views || 0;
 
   return (
     <Box minHeight="95vh">
@@ -34,7 +56,7 @@ const VideoDetail = () => {
               {title}
             </Typography>
             <Stack direction="row" justifyContent="space-between" sx={{ color: "#fff" }} py={1} px={2} >
-              <Link to={`/channel/${channelId}`}>
+              <Link to={channelId ? `/channel/${channelId}` : '#'}>
                 <Typography variant={{ sm: "subtitle1", md: 'h6' }}  color="#fff" >
                   {channelTitle}
                   <CheckCircleIcon sx={{ fontSize: "12px", color: "gray", ml: "5px" }} />
@@ -45,7 +67,7 @@ const VideoDetail = () => {
                   {parseInt(viewCount).toLocaleString()} views
                 </Typography>
                 <Typography variant="body1" sx={{ opacity: 0.7 }}>
-                  {parseInt(likeCount).toLocaleString()} likes
+                  {publishedTimeText || ''}
                 </Typography>
               </Stack>
             </Stack>

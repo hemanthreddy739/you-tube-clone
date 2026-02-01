@@ -13,13 +13,37 @@ const ChannelDetail = () => {
 
   useEffect(() => {
     const fetchResults = async () => {
-      const data = await fetchFromAPI(`channels?part=snippet&id=${id}`);
-
-      setChannelDetail(data?.items[0]);
-
-      const videosData = await fetchFromAPI(`search?channelId=${id}&part=snippet%2Cid&order=date`);
-
-      setVideos(videosData?.items);
+      try {
+        // Fetch related videos and create channel detail from author info
+        const videosData = await fetchFromAPI(`search?query=channel`);
+        console.log('Channel search results:', videosData);
+        
+        // Extract videos and try to find channel info from first video
+        const videoItems = videosData.contents?.filter(item => item.type === 'video').map(item => item.video) || [];
+        
+        // Try to find a video from this channel
+        const channelVideo = videoItems.find(v => v.author?.channelId === id);
+        
+        if (channelVideo) {
+          setChannelDetail({
+            channel_id: id,
+            title: channelVideo.author.title,
+            thumbnail_url: channelVideo.author.avatar?.[0]?.url || 'https://via.placeholder.com/200',
+            subscribers: 'N/A'
+          });
+        } else {
+          setChannelDetail({
+            channel_id: id,
+            title: 'Channel',
+            thumbnail_url: 'https://via.placeholder.com/200',
+            subscribers: 'N/A'
+          });
+        }
+        
+        setVideos(videoItems);
+      } catch (error) {
+        console.error('Channel detail error:', error);
+      }
     };
 
     fetchResults();

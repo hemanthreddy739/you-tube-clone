@@ -11,8 +11,14 @@ const Feed = () => {
   useEffect(() => {
     setVideos(null);
 
-    fetchFromAPI(`search?part=snippet&q=${selectedCategory}`)
-      .then((data) => setVideos(data.items))
+    fetchFromAPI(`search?query=${selectedCategory}`)
+      .then((data) => {
+        console.log('Feed data:', data);
+        // Extract videos from contents array, filtering for video items only
+        const videoItems = data.contents?.filter(item => item.type === 'video').map(item => item.video) || [];
+        setVideos(videoItems);
+      })
+      .catch((error) => console.error('Feed error:', error))
     }, [selectedCategory]);
 
   return (

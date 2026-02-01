@@ -10,8 +10,14 @@ const SearchFeed = () => {
   const { searchTerm } = useParams();
 
   useEffect(() => {
-    fetchFromAPI(`search?part=snippet&q=${searchTerm}`)
-      .then((data) => setVideos(data.items))
+    fetchFromAPI(`search?query=${searchTerm}`)
+      .then((data) => {
+        console.log('SearchFeed data:', data);
+        // Extract videos from contents array, filtering for video items only
+        const videoItems = data.contents?.filter(item => item.type === 'video').map(item => item.video) || [];
+        setVideos(videoItems);
+      })
+      .catch((error) => console.error('Search error:', error))
   }, [searchTerm]);
 
   return (

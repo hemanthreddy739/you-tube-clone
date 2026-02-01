@@ -8,12 +8,18 @@ const Videos = ({ videos, direction }) => {
   
   return (
     <Stack direction={direction || "row"} flexWrap="wrap" justifyContent="start" alignItems="start" gap={2}>
-      {videos.map((item, idx) => (
-        <Box key={idx}>
-          {item.id.videoId && <VideoCard video={item} /> }
-          {item.id.channelId && <ChannelCard channelDetail={item} />}
-        </Box>
-      ))}
+      {videos.map((item, idx) => {
+        // Handle both old API format (has id.videoId) and new API format (has videoId directly)
+        const isVideo = item?.videoId || item?.id?.videoId;
+        const isChannel = item?.author?.channelId || item?.id?.channelId;
+        
+        return (
+          <Box key={idx}>
+            {isVideo && <VideoCard video={item} /> }
+            {isChannel && !isVideo && <ChannelCard channelDetail={item} />}
+          </Box>
+        );
+      })}
     </Stack>
   );
 }
